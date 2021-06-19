@@ -12,7 +12,7 @@
 #include "Config.h"
 #include <queue>
 #include <sys/stat.h>
-#include <sys/types.h> 
+#include <sys/types.h>
 
 #define PI 3.14159265
 #define BIG 0
@@ -43,7 +43,7 @@ private:
 public:
 	Armor();
 	Armor(vector<Point2f> rect_target, Rect roi_rect, int num);
-	Armor(const Armor& other);
+	Armor(const Armor &other);
 };
 
 class Detector
@@ -56,7 +56,7 @@ private:
 	vector<vector<Point>> contours;
 	float matchrank[1500][1500];
 	Ptr<ml::SVM> svm = ml::SVM::load("cxy_svm_5_1.xml");
-    Config configSettings;  
+	Config configSettings;
 
 public:
 	Mat src; //source image
@@ -69,16 +69,15 @@ public:
 	Armor target_armor;
 
 	//UI
-	int saveImageCnt;//保存图片全局cnt
-	int saveImagePath;//保存图片的路径
+	int saveImageCnt;  //保存图片全局cnt
+	int saveImagePath; //保存图片的路径
 	stringstream ss;
-	string saveString1, saveString2, saveStringCnt;//保存图片使用变量
+	string saveString1, saveString2, saveStringCnt; //保存图片使用变量
 
-	string readPara;//判断时否重新读取配置文件
+	string readPara; //判断时否重新读取配置文件
 
-	int DEBUG_FLAG;
-	int DEBUG_COLOR_FLAG;
-	int GET_NUMBER_FLAG;
+	int DEBUG;
+	int GET_NUMBER;
 	int GET_FPS_FLAG;
 	int CLC_FPS_FLAG;
 
@@ -94,7 +93,10 @@ private:
 	int isArmorPattern(Mat &front);
 	void getRoi(Point2f center, Point2f size);
 
-
+	/////////////////////////////GUI////////////////////////////////////
+	void getConfig();
+	void generateSavePath(); //生成保存图片定路径
+	void saveImage();
 
 public:
 	Detector();
@@ -104,8 +106,5 @@ public:
 	void getBinaryImage();
 	void getContours();
 	void getTarget();
-
-	//UI
-	void generateSavePath();//生成保存图片定路径
 };
 #endif

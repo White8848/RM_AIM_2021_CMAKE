@@ -1,28 +1,13 @@
 #ifndef CONFIG
 #define CONFIG
-
-////////////////////////////功能开关////////////////////////////////
-//#define DEBUG
-//#define DEBUG_COLOR //修改颜色识别参数
-#define GET_NUMBER //数字识别
-
-//#define GET_FPS
-//#define CLC_FPS
-
-#define UI //ui界面
-
-////////////////////////////阈值设置////////////////////////////////
-#define RED_COLOR_THRESH 30
-#define RED_GRAY_THRESH 20
-
-#define BLUE_COLOR_THRESH 120
-#define BULE_GRAY_THRESH 3
-
 #include <string>
 #include <map>
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+////////////////////////////功能开关////////////////////////////////
+#define UI //ui界面
 
 /* 
     * \brief Generic configuration Class 

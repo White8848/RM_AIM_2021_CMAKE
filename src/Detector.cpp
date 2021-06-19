@@ -8,6 +8,8 @@ Detector::Detector()
 
 	const char ConfigFile[] = "config.txt";
 	configSettings.ReadFile(ConfigFile); //读取配置文件
+
+	generateSavePath();
 }
 
 Detector::Detector(Mat src0)
@@ -19,69 +21,16 @@ Detector::Detector(Mat src0)
 /////////////////////////////////////PUBLIC//////////////////////////////////////////
 void Detector::getResult()
 {
-
 #ifdef UI
-	ifstream myfile("UI_DEBUG/UI_file/readPara.txt");
-
-	myfile >> readPara;
-	myfile.close();
-
-	if (readPara == "1")
-	{
-		const char ConfigFile[] = "config.txt";
-		configSettings.ReadFile(ConfigFile); //读取配置文件
-	}
-
-	DEBUG_FLAG = configSettings.Read("DEBUG", DEBUG_FLAG);
-	DEBUG_COLOR_FLAG = configSettings.Read("DEBUG_COLOR", DEBUG_COLOR_FLAG);
-	GET_NUMBER_FLAG = configSettings.Read("GET_NUMBER", GET_NUMBER_FLAG);
-	GET_FPS_FLAG = configSettings.Read("GET_FPS", GET_FPS_FLAG);
-	CLC_FPS_FLAG = configSettings.Read("CLC_FPS", CLC_FPS_FLAG);
-
-	enemyColor = configSettings.Read("enemyColor", enemyColor);
-	cout << enemyColor << endl;
+	getConfig();
 #endif
 
-	//	getSrcImage(src0);
 	getBinaryImage();
 	getContours();
 	getTarget();
 
-#ifdef DEBUG
-	// imshow("bin", binary);
-	// imshow("out", outline);
-	// imshow("roi", src);
-	// imshow("last", src_out);
-	if (waitKey(1) == 27)
-		exit(0);
-#endif
-
 #ifdef UI
-	Mat last;
-
-	saveStringCnt = "";
-	saveString1 = "";
-	saveString2 = "";
-	ss << saveImageCnt;
-	ss >> saveStringCnt;
-	ss.clear();
-
-	saveString2 = "image";
-
-	saveString1 = "UI_DEBUG/UI_file/image/" + saveString2 + "/";
-	saveString2 = saveString1 + "last/" + saveStringCnt + ".PNG";
-
-	cvtColor(src_out, last, COLOR_BGR2RGB);
-
-	resize(last, image_tmp, Size(640, 480));
-	imwrite(saveString2, image_tmp);
-
-	resize(binary, image_tmp, Size(640, 480));
-	saveString2 = saveString1 + "bin/" + saveStringCnt + ".PNG";
-	imwrite(saveString2, image_tmp);
-
-	if (waitKey(1) == 27)
-		exit(0);
+	saveImage();
 #endif
 }
 
@@ -89,18 +38,16 @@ void Detector::getResult()
 void Detector::getSrcImage(Mat src0)
 {
 	src0.copyTo(src_out);
-#ifndef UI
 	if (islost == true)
 	{
 		Armor_roi = Rect(0, 0, src0.cols, src0.rows);
 	}
-	
-#endif
-	Armor_roi = Rect(0, 0, src0.cols, src0.rows);
+
 #ifdef UI
-	// src0.copyTo(src);
-	src = src0(Armor_roi);
+	Armor_roi = Rect(0, 0, src0.cols, src0.rows);
 #endif
+
+	src = src0(Armor_roi);
 }
 
 //二值化
@@ -146,7 +93,7 @@ void Detector::getContours()
 	num = contours.size();					  //轮廓的数量
 
 #ifdef UI
-	if (DEBUG_FLAG == 1)
+	if (DEBUG == 1)
 		src.copyTo(outline);
 #endif
 
@@ -155,7 +102,7 @@ void Detector::getContours()
 		box[i] = minAreaRect(Mat(contours[i])); //计算每个轮廓的最小外接矩形
 #ifdef UI
 
-		if (DEBUG_FLAG == 1)
+		if (DEBUG == 1)
 		{
 			boundRect[i] = boundingRect(Mat(contours[i]));
 			circle(outline, Point(box[i].center.x, box[i].center.y), 5, Scalar(0, 255, 0), -1, 8);
@@ -332,15 +279,14 @@ void Detector::getTarget()
 		if (number != 0)
 		{
 			detect_armor.push_back(Armor(rect_target, Armor_roi, number));
+
 #ifdef UI
-			if (DEBUG_FLAG == 1)
-			{
-				circle(src_out, Point2f(detect_armor[armor_num].center.x, detect_armor[armor_num].center.y), 5, Scalar(255, 0, 0), -1, 8);
-				char tam[100];
-				sprintf(tam, "(%0.0f,%0.0f)", detect_armor[armor_num].center.x, detect_armor[armor_num].center.y);
-				putText(src_out, tam, Point2f(detect_armor[armor_num].center.x, detect_armor[armor_num].center.y), FONT_HERSHEY_SIMPLEX, 0.4, Scalar(255, 0, 255), 1);
-			}
+			circle(src_out, Point2f(detect_armor[armor_num].center.x, detect_armor[armor_num].center.y), 5, Scalar(255, 0, 0), -1, 8);
+			char tam[100];
+			sprintf(tam, "(%0.0f,%0.0f)", detect_armor[armor_num].center.x, detect_armor[armor_num].center.y);
+			putText(src_out, tam, Point2f(detect_armor[armor_num].center.x, detect_armor[armor_num].center.y), FONT_HERSHEY_SIMPLEX, 0.4, Scalar(255, 0, 255), 1);
 #endif
+
 			armor_num++;
 		}
 	}
@@ -489,10 +435,9 @@ Mat Detector::pointProcess(Mat srcImg, int enemyColor, int color_threshold, int 
 	imgProcess(tempBinary);
 	GaussianBlur(gryBinary, gryBinary, Size(3, 3), 0, 0);
 	adaptiveThreshold(gryBinary, gryBinary, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 3, gry_threshold); //自适应阈值化
-																										   //threshold(gryBinary, gryBinary, gry_threshold, 255, THRESH_BINARY);
+	//threshold(gryBinary, gryBinary, gry_threshold, 255, THRESH_BINARY);
 
 #ifdef UI
-
 	resize(tempBinary, image_tmp, Size(640, 480));
 	saveString2 = saveString1 + "sub_bin/" + saveStringCnt + ".PNG";
 	imwrite(saveString2, image_tmp);
@@ -529,6 +474,55 @@ void Detector::imgProcess(Mat &tempBinary)
 	dilate(tempBinary, tempBinary, kernel);
 	//dilate(tempBinary, tempBinary, kernel);
 	//erode(tempBinary, tempBinary, kernel);
+}
+
+void Detector::getConfig()
+{
+	ifstream myfile("UI_DEBUG/UI_file/readPara.txt");
+
+	myfile >> readPara;
+	myfile.close();
+
+	if (readPara == "1")
+	{
+		const char ConfigFile[] = "config.txt";
+		configSettings.ReadFile(ConfigFile); //读取配置文件
+	}
+
+	DEBUG = configSettings.Read("DEBUG", DEBUG);
+	GET_NUMBER = configSettings.Read("GET_NUMBER", GET_NUMBER);
+	GET_FPS_FLAG = configSettings.Read("GET_FPS", GET_FPS_FLAG);
+	CLC_FPS_FLAG = configSettings.Read("CLC_FPS", CLC_FPS_FLAG);
+
+	enemyColor = configSettings.Read("enemyColor", enemyColor);
+}
+void Detector::saveImage()
+{
+	Mat last;
+
+	saveStringCnt = "";
+	saveString1 = "";
+	saveString2 = "";
+	ss << saveImageCnt;
+	ss >> saveStringCnt;
+	ss.clear();
+
+	saveString2 = "image";
+
+	saveString1 = "UI_DEBUG/UI_file/image/" + saveString2 + "/";
+	saveString2 = saveString1 + "last/" + saveStringCnt + ".PNG";
+
+	cvtColor(src_out, last, COLOR_BGR2RGB);
+
+	resize(last, image_tmp, Size(640, 480));
+	imwrite(saveString2, image_tmp);
+
+	resize(binary, image_tmp, Size(640, 480));
+	saveString2 = saveString1 + "bin/" + saveStringCnt + ".PNG";
+	imwrite(saveString2, image_tmp);
+
+	if (waitKey(1) == 27)
+		exit(0);
 }
 
 void Detector::generateSavePath()

@@ -26,12 +26,11 @@
 using namespace std;
 using namespace cv;
 
-Detector detector; //装甲识别类初始化
+Detector detector; //装甲识别类实例化
 unsigned char *g_pRgbBuffer;
 
 static void *Get_Armor(void *dstImage);
 static void *Get_Video(void *arg);
-static void *Show_UI(void *threadarg);
 
 typedef struct thread_data
 {
@@ -48,8 +47,6 @@ int main()
 	thread_data TD;
 	pthread_mutex_init(&(TD.lock), NULL);
 	
-
-	detector.generateSavePath();
 	/////////////////////////////////////多线程//////////////////////////////////////
 	Ret = pthread_create(&nThreadID[0], NULL, Get_Video, (void *)&TD);
 	if (Ret != PTHREAD_CREATE_SUCCESS)
@@ -57,8 +54,7 @@ int main()
 		printf("%s\n", "VIDEO_PTHREAD_CREATE_FILED");
 		return -1;
 	}
-	while (TD.run == FALSE)
-		; //等待相机
+	while (TD.run == FALSE); //等待相机
 	Ret = pthread_create(&nThreadID[1], NULL, Get_Armor, (void *)&TD);
 	if (Ret != PTHREAD_CREATE_SUCCESS)
 	{
@@ -67,22 +63,12 @@ int main()
 	}
 
 #ifdef UI
-	// system("../UI/ui.sh");
 	system("../bin/UI_DEBUG/UI");
 #endif
-	// Ret = pthread_create(&nThreadID[2], NULL, Show_UI, (void *)&TD);
-	// if (Ret != PTHREAD_CREATE_SUCCESS)
-	// {
-	// 	printf("%s\n", "ARMOR_PTHREAD_CREATE_FILED");
-	// 	return -1;
-	// }
 
 	pthread_join(nThreadID[0], NULL);
 	pthread_join(nThreadID[1], NULL);
 
-// #ifdef UI
-// 	// pthread_join(nThreadID[2], NULL);
-// #endif
 
 	pthread_mutex_destroy(&(TD.lock));
 	return 0;
@@ -102,8 +88,8 @@ static void *Get_Armor(void *threadarg)
 	detector.enemyColor = BLUE;
 
 	//////////////////////////////////串口通信初始化//////////////////////////////////
-	//Serialport serp("/dev/ttyTHS2");
-	//serp.set_opt(115200, 8, 'N', 1);
+	Serialport serp("/dev/ttyTHS2");
+	serp.set_opt(115200, 8, 'N', 1);
 
 	while (TRUE)
 	{
@@ -139,7 +125,6 @@ static void *Get_Armor(void *threadarg)
 
 		e2 = getTickCount();
 #ifdef UI
-
 		if (detector.CLC_FPS_FLAG == 1)
 		{
 			float time = (e2 - e1) / getTickFrequency();
@@ -237,7 +222,6 @@ static void *Get_Video(void *threadarg)
 			cout << "fps:" << fps << endl;
 			//cout << "time:" << time*1000 <<"ms"<< endl;
 		}
-
 #endif
 	}
 	CameraUnInit(hCamera);
