@@ -258,14 +258,16 @@ void Detector::getTarget()
 			rect_target[3] = (rect_right[0] + rect_right[1]) / 2; //右下
 		}
 
-		// for (int j = 0; j < 4; j++)
-		// {
-		// 	line(src_out, rect_target[j], rect_target[(j + 1) % 4], Scalar(0, 0, 255), 2, 8); //绘制最小外接矩形每条边（非必要）
-		// 	line(src_out, rect_left[j], rect_left[(j + 1) % 4], Scalar(0, 0, 255), 2, 8);	  //绘制最小外接矩形每条边（非必要）
-		// 	line(src_out, rect_right[j], rect_right[(j + 1) % 4], Scalar(0, 0, 255), 2, 8);	  //绘制最小外接矩形每条边（非必要）
-		// }
-		//line(src_out, rect_left[0], rect_left[1], Scalar(0, 0, 255), 2, 8); //绘制最小外接矩形每条边（非必要）
-		//line(src_out, rect_left[1], rect_left[2], Scalar(0, 255, 0), 2, 8); //绘制最小外接矩形每条边（非必要）
+#ifdef UI
+		for (int j = 0; j < 4; j++)//绘制装甲板的边缘
+		{
+			line(src_out, rect_target[j], rect_target[(j + 1) % 4], Scalar(0, 0, 255), 2, 8); 
+			line(src_out, rect_left[j], rect_left[(j + 1) % 4], Scalar(0, 0, 255), 2, 8);
+			line(src_out, rect_right[j], rect_right[(j + 1) % 4], Scalar(0, 0, 255), 2, 8);
+		}
+		// line(src_out, rect_left[0], rect_left[1], Scalar(0, 0, 255), 2, 8); //绘制最小外接矩形每条边（非必要）
+		// line(src_out, rect_left[1], rect_left[2], Scalar(0, 255, 0), 2, 8); //绘制最小外接矩形每条边（非必要）
+#endif
 
 		int number = 0;
 		double e1, e2;
@@ -275,7 +277,7 @@ void Detector::getTarget()
 		float time = (e2 - e1) / getTickFrequency();
 		//cout<<"svm_time="<<time*1000<<"ms"<<endl;
 		//cout<<"armor_number"<<number<<endl;
-		number = 1;
+		//number = 1;
 		if (number != 0)
 		{
 			detect_armor.push_back(Armor(rect_target, Armor_roi, number));
@@ -355,7 +357,13 @@ int Detector::getNumber(vector<Point2f> rect_t)
 	if (!number_roi.empty())
 	{
 		//imshow("number", number_roi);
+#ifdef UI
+	resize(number_roi, image_tmp, Size(160, 160));
+	saveString2 = saveString1 + "svm/" + saveStringCnt + ".PNG";
+	imwrite(saveString2, image_tmp);
+#endif
 		return isArmorPattern(number_roi);
+
 	}
 
 	return 0;
@@ -367,10 +375,16 @@ int Detector::isArmorPattern(Mat &front)
 	cv::cvtColor(front, gray, CV_BGR2GRAY);
 	cv::resize(gray, gray, Size(20, 20));
 	GaussianBlur(gray, gray, Size(3, 3), 0, 0);
-	adaptiveThreshold(gray, gray, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 3, -1);
+	adaptiveThreshold(gray, gray, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 3, SVM_thresh);
 	//threshold(gray, gray, 80, 255, CV_THRESH_BINARY);
 	//imshow("xxx", gray);
 	// copy the data to make the matrix continuous
+
+#ifdef UI
+	resize(gray, image_tmp, Size(160, 160));
+	saveString2 = saveString1 + "svm_bin/" + saveStringCnt + ".PNG";
+	imwrite(saveString2, image_tmp);
+#endif 
 	Mat temp;
 	gray.copyTo(temp);
 	Mat data = temp.reshape(1, 1);
@@ -434,8 +448,8 @@ Mat Detector::pointProcess(Mat srcImg, int enemyColor, int color_threshold, int 
 
 	imgProcess(tempBinary);
 	GaussianBlur(gryBinary, gryBinary, Size(3, 3), 0, 0);
-	adaptiveThreshold(gryBinary, gryBinary, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 3, gry_threshold); //自适应阈值化
-	//threshold(gryBinary, gryBinary, gry_threshold, 255, THRESH_BINARY);
+	// adaptiveThreshold(gryBinary, gryBinary, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 3, gry_threshold); //自适应阈值化
+	threshold(gryBinary, gryBinary, gry_threshold, 255, THRESH_BINARY);
 
 #ifdef UI
 	resize(tempBinary, image_tmp, Size(640, 480));
@@ -485,7 +499,7 @@ void Detector::getConfig()
 
 	if (readPara == "1")
 	{
-		const char ConfigFile[] = "config.txt";
+		const char ConfigFile[] = "UI_DEBUG/UI_file/DebugConfig.txt";
 		configSettings.ReadFile(ConfigFile); //读取配置文件
 	}
 
@@ -495,6 +509,10 @@ void Detector::getConfig()
 	CLC_FPS_FLAG = configSettings.Read("CLC_FPS", CLC_FPS_FLAG);
 
 	enemyColor = configSettings.Read("enemyColor", enemyColor);
+
+	SVM_thresh = configSettings.Read("SVM_thresh", SVM_thresh);
+
+	if (SVM_thresh >= 256) SVM_thresh = -(SVM_thresh-255);
 }
 void Detector::saveImage()
 {
@@ -544,5 +562,11 @@ void Detector::generateSavePath()
 	mkdir(test.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
 
 	test = "UI_DEBUG/UI_file/image/" + tmp + "/gray_bin";
+	mkdir(test.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
+
+	test = "UI_DEBUG/UI_file/image/" + tmp + "/svm_bin";
+	mkdir(test.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
+
+	test = "UI_DEBUG/UI_file/image/" + tmp + "/svm";
 	mkdir(test.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
 }

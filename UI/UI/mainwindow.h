@@ -12,6 +12,7 @@
 #include <sstream>
 #include <fstream>
 #include <QDir>
+
 using namespace cv;
 using namespace std;
 
@@ -30,6 +31,8 @@ public:
     QImage bin_image;
     QImage sub_bin_image;
     QImage gray_bin_image;
+    QImage svm_num_image;
+    QImage svm_bin_image;
     Mat image;
     virtual void timerEvent( QTimerEvent *event);
     string tuneParaFlag;
@@ -40,10 +43,11 @@ public:
     string GET_FPS_flag;
     string CLC_FPS_flag;
 
-    QString RED_COLOR_THRESH_value;
-    QString RED_GRAY_THRESH_value;
-    QString BLUE_COLOR_THRESH_value;
-    QString BLUE_GRAY_THRESH_value;
+    int RED_COLOR_THRESH_value;
+    int RED_GRAY_THRESH_value;
+    int BLUE_COLOR_THRESH_value;
+    int BLUE_GRAY_THRESH_value;
+    int SVM_THRESH_value;
 
     QButtonGroup *groupButton1;
 
@@ -53,6 +57,7 @@ public:
     QDir dir;
 
     string configPath;//config.txt path
+
 
 private:
     Ui::MainWindow *ui;
@@ -65,6 +70,8 @@ private:
     string readImagePath_bin;
     string readImagePath_sub_bin;
     string readImagePath_gray_bin;
+    string readImagePath_svm_num;
+    string readImagePath_svm_bin;
     stringstream ss;//用于转换字符串
     int max_readCnt;//最大当前读读取的图片
 
@@ -83,6 +90,7 @@ private slots:
 
 
     void slots_enemyColor();
+    void on_SavePara_clicked();
 };
 
 #endif // MAINWINDOW_H

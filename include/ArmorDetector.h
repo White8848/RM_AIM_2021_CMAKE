@@ -58,13 +58,16 @@ private:
 	Ptr<ml::SVM> svm = ml::SVM::load("cxy_svm_5_1.xml");
 	Config configSettings;
 
+	int color_thresh = 20; //通道相减二值化阈值
+	int gray_thresh = 20;  //灰度图二值化阈值
+	int SVM_thresh = -1;
+
 public:
 	Mat src; //source image
 	Mat src_out;
 	bool islost; //1代表丢失
 	Mat number_roi;
-	int color_thresh = 20; //通道相减二值化阈值
-	int gray_thresh = 20;  //灰度图二值化阈值
+
 	vector<Armor> detect_armor;
 	Armor target_armor;
 

@@ -2,6 +2,16 @@
 #include "ui_mainwindow.h"
 #define TIMER_TIMEOUT  1
 
+
+string getNum(int str){\
+    stringstream ss;
+    string tmp;
+    ss << str;
+    ss >> tmp;
+    ss.clear();
+    return tmp;
+}
+
 QString getNum(QString str){
 
     QString tmp;
@@ -33,10 +43,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     path = QCoreApplication::applicationDirPath();
-//    configPath = "../config.txt";// if the device == NUC
-//    configPath = "home/dji/dji/project/RM_AIM_2021_CMAKE/bin/config.txt"; // if the device == TX2
-//    qDebug()  << configPath << endl;
-//    std::cout << configPath << endl;
 
     //初始化参数 否则会报错
     image = imread(path.toStdString() + "/UI_file/initImage.PNG",COLOR_BGR2RGB);
@@ -66,31 +72,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
      QString tmp("0");
 
-     RED_COLOR_THRESH_value = tmp;
-     RED_GRAY_THRESH_value = tmp;
-     BLUE_COLOR_THRESH_value = tmp;
-     BLUE_GRAY_THRESH_value = tmp;
+//     RED_COLOR_THRESH_value = tmp;
+//     RED_GRAY_THRESH_value = tmp;
+//     BLUE_COLOR_THRESH_value = tmp;
+//     BLUE_GRAY_THRESH_value = tmp;
 
-     ui->BLUE_COLOR_THRESH->setText(tmp);
-     ui->BLUE_GRAY_THRESH->setText(tmp);
-     ui->RED_COLOR_THRESH->setText(tmp);
-     ui->RED_GRAY_THRESH->setText(tmp);
-
-     ui->BLUE_COLOR_THRESH->setLineWrapMode(QTextEdit::NoWrap);
-     ui->BLUE_GRAY_THRESH->setLineWrapMode(QTextEdit::NoWrap);
-     ui->RED_COLOR_THRESH->setLineWrapMode(QTextEdit::NoWrap);
-     ui->RED_GRAY_THRESH->setLineWrapMode(QTextEdit::NoWrap);
-
-     ui->BLUE_COLOR_THRESH->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-     ui->BLUE_GRAY_THRESH->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-     ui->RED_COLOR_THRESH->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-     ui->RED_GRAY_THRESH->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-
-
-     ui->BLUE_COLOR_THRESH->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
-     ui->BLUE_GRAY_THRESH->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
-     ui->RED_COLOR_THRESH->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
-     ui->RED_GRAY_THRESH->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+//     ui->BLUE_COLOR_THRESH->setText(tmp);
+     ui->BLUE_COLOR_THRESH->setValue(tmp.toInt());
+     ui->BLUE_GRAY_THRESH->setValue(tmp.toInt());
+     ui->RED_COLOR_THRESH->setValue(tmp.toInt());
+     ui->RED_GRAY_THRESH->setValue(tmp.toInt());
 
      enemyColor = "1";//RED
      ui->RED->setChecked(1);
@@ -99,11 +90,11 @@ MainWindow::MainWindow(QWidget *parent) :
      //读取文件初始化参数
 
      QFile readImageFile(path + "/UI_file/initPara.txt");
-     QString QSread[10];
+     QString QSread[11];
 
     //初始化
     int j = 0;
-    for (j = 0; j < 10; ++j){
+    for (j = 0; j <= 10; ++j){
 
         QSread[j] = tmp;
     }
@@ -146,10 +137,22 @@ MainWindow::MainWindow(QWidget *parent) :
     tmp2 = getNum(QSread[4]).toStdString();
     if (tmp2 == "1") ui->CLC_FPS->setCheckState(Qt::Checked);
 
-    ui->RED_COLOR_THRESH->setText(QSread[5]);
-    ui->RED_GRAY_THRESH->setText(QSread[6]);
-    ui->BLUE_COLOR_THRESH->setText(QSread[7]);
-    ui->BLUE_GRAY_THRESH->setText(QSread[8]);
+
+    ui->BLUE_COLOR_THRESH->setValue(QSread[5].toInt());
+    ui->BLUE_GRAY_THRESH->setValue(QSread[6].toInt());
+    ui->RED_COLOR_THRESH->setValue(QSread[7].toInt());
+    ui->RED_GRAY_THRESH->setValue(QSread[8].toInt());
+
+    ui->BLUE_COLOR->setValue(QSread[5].toInt());
+    ui->BLUE_GRAY->setValue(QSread[6].toInt());
+    ui->RED_COLOR->setValue(QSread[7].toInt());
+    ui->RED_GRAY->setValue(QSread[8].toInt());
+
+    int tmp_int = QSread[10].toInt();
+    if (tmp_int >= 256) tmp_int = 255-tmp_int;
+
+    ui->SVM_THRESH->setValue(QSread[10].toInt());
+    ui->SVM->setValue(QSread[10].toInt());
 
     string tmp1 = getNum(QSread[9]).toStdString();
     if (tmp1 == "1"){
@@ -162,6 +165,22 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
     readImagePath = "image";
+
+    //链接信号
+    connect(ui->BLUE_COLOR, SIGNAL(valueChanged(int)), ui->BLUE_COLOR_THRESH, SLOT(setValue(int)));
+    connect(ui->BLUE_COLOR_THRESH, SIGNAL(valueChanged(int)), ui->BLUE_COLOR, SLOT(setValue(int)));
+
+    connect(ui->BLUE_GRAY, SIGNAL(valueChanged(int)), ui->BLUE_GRAY_THRESH, SLOT(setValue(int)));
+    connect(ui->BLUE_GRAY_THRESH, SIGNAL(valueChanged(int)), ui->BLUE_GRAY, SLOT(setValue(int)));
+
+    connect(ui->RED_COLOR, SIGNAL(valueChanged(int)), ui->RED_COLOR_THRESH, SLOT(setValue(int)));
+    connect(ui->RED_COLOR_THRESH, SIGNAL(valueChanged(int)), ui->RED_COLOR, SLOT(setValue(int)));
+
+    connect(ui->RED_GRAY, SIGNAL(valueChanged(int)), ui->RED_GRAY_THRESH, SLOT(setValue(int)));
+    connect(ui->RED_GRAY_THRESH, SIGNAL(valueChanged(int)), ui->RED_GRAY, SLOT(setValue(int)));
+
+    connect(ui->SVM, SIGNAL(valueChanged(int)), ui->SVM_THRESH, SLOT(setValue(int)));
+    connect(ui->SVM_THRESH, SIGNAL(valueChanged(int)), ui->SVM, SLOT(setValue(int)));
 
     m_nTimerID = this->startTimer(TIMER_TIMEOUT);
 
@@ -215,6 +234,26 @@ void MainWindow::showImages(){
     image = imread(readImagePath_sub_bin);
     sub_bin_image = QImage((const unsigned char*)image.data, image.cols, image.rows, image.cols* image.channels(), QImage::Format_RGB888);
     ui->sub_bin->setPixmap(QPixmap::fromImage(sub_bin_image));
+
+    //SVM_NUM
+    ss << readImageCnt;
+    ss >> readImagePath_svm_num;
+    ss.clear();
+    readImagePath_svm_num = readImagePath2 + "svm/" + readImagePath_svm_num + ".PNG";
+
+    image = imread(readImagePath_svm_num);
+    svm_num_image = QImage((const unsigned char*)image.data, image.cols, image.rows, image.cols* image.channels(), QImage::Format_RGB888);
+    ui->SVM_NUM->setPixmap(QPixmap::fromImage(svm_num_image));
+
+    //SVM_BIN
+    ss << readImageCnt;
+    ss >> readImagePath_svm_bin;
+    ss.clear();
+    readImagePath_svm_bin = readImagePath2 + "svm_bin/" + readImagePath_svm_bin + ".PNG";
+
+    image = imread(readImagePath_svm_bin);
+    svm_bin_image = QImage((const unsigned char*)image.data, image.cols, image.rows, image.cols* image.channels(), QImage::Format_RGB888);
+    ui->SVM_BIN->setPixmap(QPixmap::fromImage(svm_bin_image));
 
 
     QString str1 = QString::number(readImageCnt);
@@ -270,13 +309,14 @@ void MainWindow::timerEvent(QTimerEvent *event)
             if (tuneParaFlag == "1"){
                 //写入参数
 
-                ofstream outfile2("./config.txt", ios::trunc);
+                ofstream outfile2(path.toStdString() + "/UI_file/DebugConfig.txt", ios::trunc);
 
-
-                 RED_COLOR_THRESH_value = ui->RED_COLOR_THRESH->toPlainText();
-                 RED_GRAY_THRESH_value = ui->RED_GRAY_THRESH->toPlainText();
-                 BLUE_COLOR_THRESH_value = ui->BLUE_COLOR_THRESH->toPlainText();
-                 BLUE_GRAY_THRESH_value = ui->BLUE_GRAY_THRESH->toPlainText();
+                 RED_COLOR_THRESH_value = ui->RED_COLOR_THRESH->value();
+                 RED_GRAY_THRESH_value = ui->RED_GRAY_THRESH->value();
+                 BLUE_COLOR_THRESH_value = ui->BLUE_COLOR_THRESH->value();
+                 BLUE_GRAY_THRESH_value = ui->BLUE_GRAY_THRESH->value();
+                 SVM_THRESH_value =ui->SVM_THRESH->value();
+                 if (SVM_THRESH_value < 0) SVM_THRESH_value = -SVM_THRESH_value + 255;
 
                 outfile2 << "DEBUG=" + getNum(DEBUG_flag);
                 outfile2 << "\n";
@@ -293,19 +333,22 @@ void MainWindow::timerEvent(QTimerEvent *event)
                 outfile2 << "CLC_FPS=" + getNum(CLC_FPS_flag);
                 outfile2 << "\n";
 
-                outfile2 << "RED_COLOR_THRESH=" + getNum(RED_COLOR_THRESH_value).toStdString();
+                outfile2 << "RED_COLOR_THRESH=" + getNum(RED_COLOR_THRESH_value);
                 outfile2 << "\n";
 
-                outfile2 << "RED_GRAY_THRESH=" + getNum(RED_GRAY_THRESH_value).toStdString();
+                outfile2 << "RED_GRAY_THRESH=" + getNum(RED_GRAY_THRESH_value);
                 outfile2 << "\n";
 
-                outfile2 << "BLUE_COLOR_THRESH=" + getNum(BLUE_COLOR_THRESH_value).toStdString();
+                outfile2 << "BLUE_COLOR_THRESH=" + getNum(BLUE_COLOR_THRESH_value);
                 outfile2 << "\n";
 
-                outfile2 << "BLUE_GRAY_THRESH=" + getNum(BLUE_GRAY_THRESH_value).toStdString();
+                outfile2 << "BLUE_GRAY_THRESH=" + getNum(BLUE_GRAY_THRESH_value);
                 outfile2 << "\n";
 
                 outfile2 << "enemyColor=" + enemyColor.toStdString();
+                outfile2 << "\n";
+
+                outfile2 << "SVM_thresh=" + getNum(SVM_THRESH_value);
 
                 outfile2.close();
 
@@ -329,19 +372,23 @@ void MainWindow::timerEvent(QTimerEvent *event)
                 outfile3 << getNum(CLC_FPS_flag);
                 outfile3 << "\n";
 
-                outfile3 << getNum(RED_COLOR_THRESH_value).toStdString();
+                outfile3 << getNum(RED_COLOR_THRESH_value);
                 outfile3 << "\n";
 
-                outfile3 << getNum(RED_GRAY_THRESH_value).toStdString();
+                outfile3 << getNum(RED_GRAY_THRESH_value);
                 outfile3 << "\n";
 
-                outfile3 << getNum(BLUE_COLOR_THRESH_value).toStdString();
+                outfile3 << getNum(BLUE_COLOR_THRESH_value);
                 outfile3 << "\n";
 
-                outfile3 << getNum(BLUE_GRAY_THRESH_value).toStdString();
+                outfile3 << getNum(BLUE_GRAY_THRESH_value);
                 outfile3 << "\n";
 
                 outfile3 << getNum(enemyColor).toStdString();
+                outfile3 << "\n";
+
+                outfile3 << getNum(SVM_THRESH_value);
+
                 outfile3.close();
             }
 
@@ -457,4 +504,51 @@ void MainWindow::slots_enemyColor(){
                break;
            }
 
+}
+
+void MainWindow::on_SavePara_clicked()
+{
+    ofstream outfile2("./config.txt", ios::trunc);
+
+
+     RED_COLOR_THRESH_value = ui->RED_COLOR_THRESH->value();
+     RED_GRAY_THRESH_value = ui->RED_GRAY_THRESH->value();
+     BLUE_COLOR_THRESH_value = ui->BLUE_COLOR_THRESH->value();
+     BLUE_GRAY_THRESH_value = ui->BLUE_GRAY_THRESH->value();
+     SVM_THRESH_value =ui->SVM_THRESH->value();
+     if (SVM_THRESH_value < 0) SVM_THRESH_value = -SVM_THRESH_value + 255;
+
+    outfile2 << "DEBUG=" + getNum(DEBUG_flag);
+    outfile2 << "\n";
+
+    outfile2 << "DEBUG_COLOR=" + getNum(DEBUG_COLOR_flag);
+    outfile2 << "\n";
+
+    outfile2 << "GET_NUMBER=" + getNum(GET_NUMBER_flag);
+    outfile2 << "\n";
+
+    outfile2 << "GET_FPS=" + getNum(GET_FPS_flag);
+    outfile2 << "\n";
+
+    outfile2 << "CLC_FPS=" + getNum(CLC_FPS_flag);
+    outfile2 << "\n";
+
+    outfile2 << "RED_COLOR_THRESH=" + getNum(RED_COLOR_THRESH_value);
+    outfile2 << "\n";
+
+    outfile2 << "RED_GRAY_THRESH=" + getNum(RED_GRAY_THRESH_value);
+    outfile2 << "\n";
+
+    outfile2 << "BLUE_COLOR_THRESH=" + getNum(BLUE_COLOR_THRESH_value);
+    outfile2 << "\n";
+
+    outfile2 << "BLUE_GRAY_THRESH=" + getNum(BLUE_GRAY_THRESH_value);
+    outfile2 << "\n";
+
+    outfile2 << "enemyColor=" + enemyColor.toStdString();
+    outfile2 << "\n";
+
+    outfile2 << "SVM_thresh=" + getNum(SVM_THRESH_value);
+
+    outfile2.close();
 }
